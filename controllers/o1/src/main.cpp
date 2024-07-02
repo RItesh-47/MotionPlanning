@@ -81,8 +81,24 @@ void get_Trajectory(std::vector<Point2D> &path, Point2D &outputPID,
     if (errTheta > 180) errTheta -= 360;
     if (errTheta < -180) errTheta += 360;
 
+    double nearestX, nearestY,
+        minDistance = std::numeric_limits<double>::infinity();
+    for (int j = 0; j < path.size(); j++) {
+        auto i = path[j];
+        double dist = std::sqrt((i.x - nowPos.x) * (i.x - nowPos.x) +
+                                (i.y - nowPos.y) * (i.y - nowPos.y));
+        if (dist < minDistance) {
+            minDistance = dist;
+            nearestX = i.x;
+            nearestY = i.y;
+            count1 = j;
+        }
+    }
+
     // IF using IMU as orientation
-    mot->positionAngularControl(errorX, errorY, errTheta, yaw, outputPID);
+    mot->positionAngularControl(errorX, errorY, errTheta, yaw, outputPID,
+                                nearestX, nearestY, minDistance, nowPos.x,
+                                nowPos.y, path.back(), count1, path);
 
     // If using Odometry orientation
     // mot->PositionAngularControl(errorX, errorY, errTheta, nowPos.theta,
@@ -90,14 +106,15 @@ void get_Trajectory(std::vector<Point2D> &path, Point2D &outputPID,
 
     RobotKinematic::getInstance()->inverseKinematics(
         outInvers, outputPID.x, outputPID.y, outputPID.theta);
-    if (dist < 0.15 && fabs(errTheta) < 3) {
-        mot->position_pid->reset();
-        mot->yaw_pid->reset();
-        count1++;
-        IC(count1);
-    }
+
+    // if (dist < 0.15 && fabs(errTheta) < 3) {
+    //     mot->position_pid->reset();
+    //     mot->yaw_pid->reset();
+    //     count1++;
+    //     IC(count1);
+    // }
     if (count1 > path.size() - 1) {
-        count1 = 0;
+        count1 = path.size() - 1;
     }
 }
 
@@ -196,7 +213,7 @@ int main(int argc, char **argv) {
     std::vector<PointPair> points;  // from output.txt
 
     // OMPL Setup Parameter
-    double runTime = 0.5;
+    double runTime = 0.01;
     optimalPlanner plannerType = PLANNER_RRTSTAR;
     planningObjective objectiveType = OBJECTIVE_PATHLENGTH;
     std::string outputFile = "output.txt";
@@ -254,8 +271,8 @@ int main(int argc, char **argv) {
 
     // std::vector<Point2D> circVec;
     // for (int i = 0; i < 360; i += 10) {
-    //     float x_ = 1 * cos((float)i * M_PI / 180);
-    //     float y_ = 1 * sin((float)i * M_PI / 180);
+    //     double x_ = 1 * cos((double)i * M_PI / 180);
+    //     double y_ = 1 * sin((double)i * M_PI / 180);
     //     circVec.push_back(Point2D(x_, y_, 0));
     // }
     // std::vector<Point2D> targetPos;
@@ -312,8 +329,8 @@ int main(int argc, char **argv) {
                         count1++;
                 } else if (idx + 1 >= obstacles.size()) {
                     if (!isok(targetPos[idx - 1], targetPos[idx], it)) count1++;
-                } else if(idx-1<-1){
-                    if(!isok(targetPos[idx], targetPos[idx+1], it)) count1++;
+                } else if (idx - 1 < -1) {
+                    if (!isok(targetPos[idx], targetPos[idx + 1], it)) count1++;
                 }
             }
             if (count1 != obstacles.size()) flag = 1;

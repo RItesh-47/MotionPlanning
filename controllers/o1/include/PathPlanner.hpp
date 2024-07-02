@@ -96,9 +96,9 @@ std::vector<PointPair> readPointsFromFile() {
         points.clear();  // Clear vector on error
     }
 
-    for (const auto &p : points) {
-        std::cout << p.first << " " << p.second << std::endl;
-    }
+    // for (const auto &p : points) {
+    //     std::cout << p.first << " " << p.second << std::endl;
+    // }
 
     return points;
 }
@@ -351,7 +351,7 @@ void plan(double runTime, double A, double B, std::vector<Point2D> &obs,
 
         // std::vector< std::pair<double, std::pair<double, double> > > v;
 
-        // float start_x=x_values.front(), end_x=x_values.back();
+        // double start_x=x_values.front(), end_x=x_values.back();
 
         // if (start_x > end_x)
         // {
@@ -361,31 +361,37 @@ void plan(double runTime, double A, double B, std::vector<Point2D> &obs,
 
         // tk::spline s(x_values,y_values,tk::spline::cspline);
 
-        T[0] = 0;
-        for (int i = 1; i < x_values.size(); i++) {
-            T[i] = T[i - 1] + sqrt((x_values[i] - x_values[i - 1]) *
-                                       (x_values[i] - x_values[i - 1]) +
-                                   (y_values[i] - y_values[i - 1]) *
-                                       (y_values[i] - y_values[i - 1]));
-        }
-        // setup splines for x and y coordinate
-        tk::spline sx(T, x_values), sy(T, y_values);
-
         // Array to store robot positions
         std::vector<std::pair<double, double>> robot_positions;
 
-        float n = 10, diff = T.back() / n;
-        for (int i = 0; i < n; i++) {
-            float t = diff * i;
-            robot_positions.push_back({sx(t), sy(t)});
+        if (x_values.size() > 2) {
+            T[0] = 0;
+            for (int i = 1; i < x_values.size(); i++) {
+                T[i] = T[i - 1] + sqrt((x_values[i] - x_values[i - 1]) *
+                                           (x_values[i] - x_values[i - 1]) +
+                                       (y_values[i] - y_values[i - 1]) *
+                                           (y_values[i] - y_values[i - 1]));
+            }
+            // setup splines for x and y coordinate
+            tk::spline sx(T, x_values), sy(T, y_values);
+
+            double n = 200, diff = T.back() / n;
+            for (int i = 0; i < n; i++) {
+                double t = diff * i;
+                robot_positions.push_back({sx(t), sy(t)});
+            }
+            robot_positions.push_back({sx(T.back()), sy(T.back())});
+        } else {
+            for (int i = 0; i < x_values.size(); i++) {
+                robot_positions.push_back({x_values[i], y_values[i]});
+            }
         }
-        robot_positions.push_back({sx(T.back()), sy(T.back())});
 
         // Display the array of robot positions
-        std::cout << "Robot Positions:\n";
-        for (const auto &pos : robot_positions) {
-            std::cout << "(" << pos.first << ", " << pos.second << ")\n";
-        }
+        // std::cout << "Robot Positions:\n";
+        // for (const auto &pos : robot_positions) {
+        //     std::cout << "(" << pos.first << ", " << pos.second << ")\n";
+        // }
 
         // Write the array to the text file
         std::ofstream output_file("output1.txt");

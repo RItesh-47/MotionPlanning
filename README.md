@@ -8,11 +8,23 @@ This repository includes the Webots simulation for motion planning (local and gl
 2. OMPL v1.6 (C++ Version, python bindings are not required)
 2. Webots v2023b
 3. cmake
+4. boost
+
+__Note__: Use following instructions for Ubuntu -
+
+```
+sudo apt update && sudo apt upgrade
+sudo apt install libopencv-dev
+sudo apt install libboost-all-dev
+sudo apt install libompl-dev ompl-demos
+```
+
+For MacOS, you need specific homebrew packages.
 
 ## How to Run
 
 - Install Webots and OpenCV
-- Clone the repository and `% cd controllers/omniwheel_supervisor`
+- Clone the repository and `% cd controllers/o1`
 - Create a `build` directory and navigate to it: `% mkdir build && cd build`
 - Configure using cmake with `% cmake ..`
 - Build the project with `% make`
@@ -22,7 +34,7 @@ Note: To use the repository with Visual Studio Code Intellisense, change the nec
 
 ## Code Organisation
 
-- omniwheel_supervisor
+- o1
   - `Coordinate.hpp` => It has definitions of `wheel_angular_vel` struct and `Point2D` struct
   - `Motion.hpp` => Has complete description of class `PID` and the class which implements motion control of the robot.
   - `Robot.hpp` => Provides code needed for interfacing the desired motion from `Motion.hpp` to actual wheel velocities via forward and inverse kinematics with odometry information.
